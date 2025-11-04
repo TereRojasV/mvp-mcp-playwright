@@ -10,24 +10,71 @@ export class SearchPage {
     constructor(page: Page) {
         this.page = page;
         
-        // Inicializamos los locators (los selectores exactos los obtendremos con codegen)
-        this.createButton = page.locator(''); // TODO: Agregar selector del botón crear
-        this.searchInput = page.locator('');  // TODO: Agregar selector del campo de búsqueda
+        this.createButton = page.getByRole('button', { name: 'Crear' });
+        this.searchInput = page.getByRole('textbox', { name: 'Buscar' });
     }
 
     // Métodos de la página
     async navigateToSearch() {
-        await this.page.goto(process.env.APPSHEET_SEARCH_URL || '');
-        // TODO: Agregar validaciones de que la página cargó correctamente
+        if (!process.env.APPSHEET_SEARCH_URL) {
+            throw new Error('APPSHEET_SEARCH_URL environment variable is not set');
+        }
+        
+        // Navegar con opciones de espera
+        await this.page.goto(process.env.APPSHEET_SEARCH_URL, {
+            waitUntil: 'networkidle',
+            timeout: 30000
+        });
+        
+        // Asegurarnos de que el contenido principal está cargado
+        await this.page.waitForLoadState('domcontentloaded');
+        
+        // Esperar a que los elementos clave estén visibles
+        await this.createButton.waitFor({
+            state: 'visible',
+            timeout: 30000
+        });
+
+        await this.searchInput.waitFor({
+            state: 'visible',
+            timeout: 30000
+        });
     }
 
     async clickCreateButton() {
+        // Esperar a que el botón esté visible y habilitado
+        await this.createButton.waitFor({ 
+            state: 'visible',
+            timeout: 20000
+        });
+        
+        // Verificar que el botón es interactuable
+        await expect(this.createButton).toBeEnabled();
+      
         await this.createButton.click();
-        // TODO: Agregar espera o validación necesaria después del clic
+        
+        // Verificar que llegamos a la URL del formulario
+        if (!process.env.APPSHEET_FORM_URL) {
+            throw new Error('APPSHEET_FORM_URL environment variable is not set');
+        }
+        
+        // Esperamos a que aparezca el botón Save, que indica que el formulario está listo
+        await this.page.getByRole('button', { name: 'Save' }).waitFor({
+            state: 'visible',
+            timeout: 30000
+        });
+        
     }
 
     async searchForClient(searchText: string) {
+        await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
         await this.searchInput.fill(searchText);
         // TODO: Agregar lógica adicional si es necesario (por ejemplo, presionar Enter)
+    }
+
+    async waitForPageReady() {
+        // Esperar a que los elementos clave estén visibles
+        await this.createButton.waitFor({ state: 'visible', timeout: 10000 });
+        await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
     }
 }

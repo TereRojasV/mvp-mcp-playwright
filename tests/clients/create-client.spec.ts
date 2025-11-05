@@ -39,17 +39,11 @@ test.describe('Create Client Tests', () => {
         await createFormPage.fillPhone(testClient.phone);
         await createFormPage.validateSaveButtonVisible();
         await createFormPage.clickSave();
-        await createFormPage.validateSuccessfulCreation();
-
-        // Volver a la página de búsqueda
-        await searchPage.navigateToSearch();
         
-        // Buscar y verificar el cliente
-        //console.log(`Buscando el cliente creado con nombre: ${testClient.businessName}`);
-        //await searchPage.searchForClient(testClient.businessName);
-    
-        //console.log('Verificando visibilidad del cliente en la lista...');
-        //await expect(page.getByText(testClient.businessName)).toBeVisible({ timeout: 3000 });
-        //console.log('Cliente encontrado exitosamente en la lista');
+        // 3. Validar que el cliente se creó correctamente
+        await expect(
+            createFormPage.validateSuccessfulCreation(),
+            'El formulario debería cerrarse después de guardar'
+        ).resolves.not.toThrow();
   });
 });
